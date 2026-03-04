@@ -3,16 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bildviewer mit JS-Zoom</title>
+<title>Bildviewer mit JS-Zoom + Drag</title>
 <style>
 body {
     margin: 0;
-    background: rgb(34, 4, 207);
+    background: rgb(12, 146, 7);
     overflow: hidden;
-    touch-action: none; /* Damit wir Touch-Zoom/Drag selbst handhaben */
+    touch-action: none;
 }
-
-/* Container für das Bild */
 #container {
     width: 100%;
     height: 100vh;
@@ -22,17 +20,14 @@ body {
     overflow: hidden;
     position: relative;
 }
-
 #image {
     width: 100%;
     max-width: 100%;
     height: auto;
     touch-action: none;
     transform-origin: center center;
-    transition: transform 0.1s ease-out;
+    transition: transform 0.05s ease-out;
 }
-
-/* Buttons fixieren */
 .controls {
     position: fixed;
     bottom: 40px;
@@ -43,7 +38,6 @@ body {
     box-sizing: border-box;
     z-index: 9999;
 }
-
 .controls img {
     width: 60px;
     cursor: pointer;
@@ -63,14 +57,12 @@ body {
 </div>
 
 <script>
-// Bilddaten
+// Bilder
 const images = ["01.jpg","02.jpg","03.jpg","04.jpg"];
 let current = 0;
-
 const img = document.getElementById('image');
-const container = document.getElementById('container');
 
-// Navigation
+// Buttons
 document.getElementById('prevBtn').onclick = () => {
     current = (current - 1 + images.length) % images.length;
     resetZoom();
@@ -82,22 +74,22 @@ document.getElementById('nextBtn').onclick = () => {
     img.src = images[current];
 };
 
-// Zoom & Drag Variablen
+// Zoom & Drag
 let scale = 1;
 let lastScale = 1;
 let startDistance = 0;
+
 let startX = 0, startY = 0;
 let offsetX = 0, offsetY = 0;
 let lastX = 0, lastY = 0;
 
-// Touch Events
 container.addEventListener('touchstart', e => {
     if (e.touches.length === 2) {
         startDistance = getDistance(e.touches[0], e.touches[1]);
         lastScale = scale;
     } else if (e.touches.length === 1) {
-        startX = e.touches[0].clientX - offsetX;
-        startY = e.touches[0].clientY - offsetY;
+        startX = e.touches[0].clientX - lastX;
+        startY = e.touches[0].clientY - lastY;
     }
 });
 
@@ -110,14 +102,14 @@ container.addEventListener('touchmove', e => {
     } else if (e.touches.length === 1) {
         offsetX = e.touches[0].clientX - startX;
         offsetY = e.touches[0].clientY - startY;
+        lastX = offsetX;
+        lastY = offsetY;
         applyTransform();
     }
 });
 
 container.addEventListener('touchend', e => {
-    if (scale < 1) {
-        resetZoom();
-    }
+    if (scale < 1) resetZoom();
 });
 
 function getDistance(t1, t2) {
@@ -126,9 +118,10 @@ function getDistance(t1, t2) {
 
 function applyTransform() {
     const rect = img.getBoundingClientRect();
-    // Bild nicht aus Container verschieben
     const maxX = Math.max(0, (scale - 1) * rect.width / 2);
     const maxY = Math.max(0, (scale - 1) * rect.height / 2);
+
+    // Begrenze Drag innerhalb Bildgrenzen
     let x = Math.min(maxX, Math.max(-maxX, offsetX));
     let y = Math.min(maxY, Math.max(-maxY, offsetY));
     img.style.transform = `scale(${scale}) translate(${x/scale}px, ${y/scale}px)`;
@@ -138,6 +131,8 @@ function resetZoom() {
     scale = 1;
     offsetX = 0;
     offsetY = 0;
+    lastX = 0;
+    lastY = 0;
     img.style.transform = `scale(1) translate(0,0)`;
 }
 </script>
