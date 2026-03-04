@@ -19,18 +19,18 @@
     .viewer {
         position: relative;
         width: 100vw;
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        height: 100dvh; /* wichtig für mobile */
         overflow: hidden;
     }
 
     img.main-image {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%) scale(1);
         max-width: 100vw;
         height: auto;
-        transform-origin: center center;
-        transition: transform 0.05s ease-out;
+        transform-origin: top center;
         user-select: none;
         -webkit-user-drag: none;
     }
