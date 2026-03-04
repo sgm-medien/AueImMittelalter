@@ -2,49 +2,63 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Seitenzoom deaktivieren -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <title>Bildviewer</title>
 
 <style>
 html, body {
     margin: 0;
     padding: 0;
-    background: rgb(255, 0, 0);
-    font-family: sans-serif;
+    background: rgb(0, 20, 197);
+    overflow: hidden;
+    height: 100%;
+    touch-action: none;
 }
 
-.image-container {
-    width: 100%;
+/* Bildbereich */
+.viewer {
+    position: relative;
+    width: 100vw;
+    height: 100dvh;
+    overflow: hidden;
 }
 
-.image-container img {
-    width: 100%;
+/* Bild */
+.viewer img {
+    width: 100vw;
     height: auto;
     display: block;
+    transform-origin: top left;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
+/* Buttons */
 .controls {
     position: fixed;
-    bottom: 100px; /* bewusst höher wegen OS */
+    bottom: 100px; /* Abstand zur OS-Leiste */
     left: 0;
     width: 100%;
     display: flex;
     justify-content: space-between;
     padding: 0 40px;
     box-sizing: border-box;
+    z-index: 10;
 }
 
 .controls img {
     width: 60px;
     height: auto;
-    cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
-<div class="image-container">
+<div class="viewer">
     <img id="image" src="01.jpg">
 </div>
 
@@ -54,6 +68,10 @@ html, body {
 </div>
 
 <script>
+// ==========================
+// Bilder
+// ==========================
+
 const images = ["01.jpg", "02.jpg", "03.jpg", "04.jpg"];
 let currentIndex = 0;
 
@@ -61,10 +79,14 @@ const img = document.getElementById("image");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 
+// ==========================
+// Bildwechsel
+// ==========================
+
 function showImage(index) {
     currentIndex = (index + images.length) % images.length;
     img.src = images[currentIndex];
-    window.scrollTo(0, 0); // immer oben starten
+    resetZoom();
 }
 
 prevBtn.addEventListener("click", () => {
@@ -74,6 +96,47 @@ prevBtn.addEventListener("click", () => {
 nextBtn.addEventListener("click", () => {
     showImage(currentIndex + 1);
 });
+
+// ==========================
+// Zoom (nur Bild, kein Seitenzoom)
+// ==========================
+
+let scale = 1;
+let startDistance = 0;
+let startScale = 1;
+
+function getDistance(touches) {
+    return Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY
+    );
+}
+
+function resetZoom() {
+    scale = 1;
+    img.style.transform = "scale(1)";
+}
+
+img.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) {
+        startDistance = getDistance(e.touches);
+        startScale = scale;
+    }
+}, { passive: false });
+
+img.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 2) {
+        e.preventDefault();
+
+        const newDistance = getDistance(e.touches);
+        scale = startScale * (newDistance / startDistance);
+
+        // Zoombegrenzung
+        scale = Math.min(Math.max(1, scale), 5);
+
+        img.style.transform = `scale(${scale})`;
+    }
+}, { passive: false });
 </script>
 
 </body>
